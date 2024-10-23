@@ -1,0 +1,87 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    echo "Did you forget the name for you new project?"
+    exit 1
+fi
+
+PROJECT_NAME=$1
+LOGIC_PROJECT="$PROJECT_NAME.Library"
+CONSOLE_PROJECT="$PROJECT_NAME.Console"
+BLAZOR_PROJECT="$PROJECT_NAME.Blazor"
+TESTS_PROJECT="$PROJECT_NAME.Tests"
+
+AddReference() {
+    if cd "$1"; then
+        dotnet add reference "../$LOGIC_PROJECT" >/dev/null 2>&1
+        echo "Added Logic Reference to ../$project ✅"
+        if [ "$1" = "$TESTS_PROJECT" ]; then
+            if dotnet add package FluentAssertions >/dev/null 2>&1; then
+                echo "Installed FluentAssertions in $TESTS_PROJECT ✅"
+            else
+                echo "Failed to install FluentAssertions ❌"
+                exit 1
+            fi
+        fi
+        cd ../
+    else
+        echo "Failed to add reference to $project ❌"
+        exit 1
+    fi
+}
+
+echo "Creating New C# Project...  $PROJECT_NAME"
+
+if dotnet new sln -o "$PROJECT_NAME" >/dev/null 2>&1; then
+    echo "Created New SLN ✅"
+else
+    echo "Created New SLN ❌"
+fi
+
+if cd "$PROJECT_NAME"; then
+    echo "Switched to $PROJECT_NAME ✅"
+else
+    echo "Directory $PROJECT_NAME not found ❌"
+    exit 1
+fi
+
+if dotnet new classlib -n "$LOGIC_PROJECT" >/dev/null 2>&1; then
+    echo "Created New Logic ✅"
+else
+    echo "Created New Logic ❌"
+fi
+
+if dotnet new console -n "$CONSOLE_PROJECT" >/dev/null 2>&1; then
+    echo "Created New Console ✅"
+else
+    echo "Created New Console ❌"
+fi
+
+if dotnet new blazor -ai -e -n "$BLAZOR_PROJECT" >/dev/null 2>&1; then
+    echo "Created New Blazor ✅"
+else
+    echo "Created New Blazor ❌"
+fi
+
+if dotnet new xunit -n "$TESTS_PROJECT" >/dev/null 2>&1; then
+    echo "Created New Tests ✅"
+else
+    echo "Created New Tests ❌"
+fi
+
+for project in "$LOGIC_PROJECT" "$CONSOLE_PROJECT" "$BLAZOR_PROJECT" "$TESTS_PROJECT"; do
+    if dotnet sln add "$project" >/dev/null 2>&1; then
+        echo "Added $project to $PROJECT_NAME ✅"
+    else
+        echo "Failed to add $project to $PROJECT_NAME ❌"
+        exit 1
+    fi
+done
+
+for project in "$CONSOLE_PROJECT" "$BLAZOR_PROJECT" "$TESTS_PROJECT"; do
+    AddReference "$project"
+done
+
+echo "🎉 Created $PROJECT_NAME Successfully! 🎉"
+
+code .
